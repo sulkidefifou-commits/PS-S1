@@ -1,12 +1,19 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+
 
 public class GameManager : MonoBehaviour
 {
     private static GameManager _instance;
-    public static GameManager Instance => _instance;
+    public static GameManager Instance
+    {
+        get
+        {
+            return _instance;
+        }
+    }
 
 
     [Serializable]
@@ -44,15 +51,55 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    [Header("Debug")] 
+    public GameObject object1;
+    public GameObject object2;
+    
+
+    
     private void Awake()
     {
         if (_instance != null && _instance != this)
         {
-            Destroy(gameObject);
-            return;
+            DestroyImmediate(gameObject);
         }
+        else
+        {
+            _instance = this;
+            
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+    
 
-        _instance = this;
+    public void ActivateObject1()
+    {
+        object1.SetActive(!object1.activeSelf);
+    }
+
+    public void ActivateObject2()
+    {
+        object2.SetActive(!object2.activeSelf);
+    }
+
+    public void ReloadCurrentScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+    
+    public void RegisterDebugObject1(GameObject gameObject)
+    {
+        object1 = gameObject;
+    }
+    
+    public void RegisterDebugObject2(GameObject gameObject)
+    {
+        object2 = gameObject;
     }
 
     private void OnDestroy()
@@ -84,7 +131,7 @@ public class GameManager : MonoBehaviour
         return value > 0f && !float.IsInfinity(value);
     }
     
-    public GatshaBallEntity SpawnBall(int level, Vector3 position)
+    public GatshaBallEntity SpawnBall(int level, Vector3 position, Transform parent)
     {
         if (!TryGetValidBallState(level, out _)) return null;
         
@@ -95,7 +142,7 @@ public class GameManager : MonoBehaviour
             return null;
         }
 
-        GatshaBallEntity ball = Instantiate(BaseEntity, position, Quaternion.identity);
+        GatshaBallEntity ball = Instantiate(BaseEntity, position, Quaternion.identity );
         GameObject instance = ball.gameObject;
         if (!ball.Initialize(this, level))
         {
@@ -104,6 +151,7 @@ public class GameManager : MonoBehaviour
             return null;
         }
 
+        ball.gameObject.transform.SetParent(parent);
         ball.enabled = true;
         instance.SetActive(true);
         ball.Position = position;
@@ -125,7 +173,7 @@ public class GameManager : MonoBehaviour
 
         if (nextLevel <= LevelCount)
         {
-            GatshaBallEntity merged = SpawnBall(nextLevel, contactPoint);
+            GatshaBallEntity merged = SpawnBall(nextLevel, contactPoint, first.gameObject.transform.parent);
             if (merged == null)
             {
                 first.SetMergePending(false);
