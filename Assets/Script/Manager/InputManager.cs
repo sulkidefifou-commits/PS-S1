@@ -1,59 +1,82 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 
 [DefaultExecutionOrder(-1)]
 public class InputManager : MonoBehaviour
 {
+    public TMP_Text text;
 
-    public delegate void StartTouchEvent(Vector2 position, float time);
-    public event StartTouchEvent OnStartTouch;
-    public delegate void EndTouchEvent(Vector2 position, float time);
-    public event EndTouchEvent OnEndTouch;
-    
     private PlayerInputActions playerInputActions;
 
     private void Awake()
     {
-       playerInputActions = new PlayerInputActions();
+        playerInputActions = new PlayerInputActions();
     }
 
     private void OnEnable()
     {
         playerInputActions.Enable();
-        TouchSimulation.Enable();
+
+        EnhancedTouchSupport.Enable();
+
+        Touch.onFingerDown += FingerDown;
+        Touch.onFingerUp += FingerUp;
     }
 
     private void OnDisable()
     {
+        Touch.onFingerDown -= FingerDown;
+        Touch.onFingerUp -= FingerUp;
+        
+        EnhancedTouchSupport.Disable();
+
         playerInputActions.Disable();
-        TouchSimulation.Disable();
     }
 
-    private void Start()
+    private void FingerDown(Finger finger)
     {
-        playerInputActions.Player.TouchPress.started += StartTouch;
-        playerInputActions.Player.TouchPress.canceled += EndTouch;
-    }
-    
-    private void StartTouch(InputAction.CallbackContext ctx)
-    {
-        if (OnStartTouch != null) OnStartTouch(playerInputActions.Player.TouchPosition.ReadValue<Vector2>(),(float)ctx.startTime);
-        
-        Debug.Log("StartTouch " + playerInputActions.Player.TouchPosition.ReadValue<Vector2>());
+        Vector2 position = finger.currentTouch.screenPosition;
+
+        ContactDetected(finger.index, position);
     }
 
-    private void EndTouch(InputAction.CallbackContext ctx)
+    private void FingerUp(Finger finger)
     {
-        if (OnStartTouch != null) OnStartTouch(playerInputActions.Player.TouchPosition.ReadValue<Vector2>(),(float)ctx.time); 
-        
-        
+        Vector2 position = finger.currentTouch.screenPosition;
+
+        ContactReleased(finger.index, position);
     }
-    
+
+    private void ContactDetected(int fingerIndex, Vector2 position)
+    {
+        Debug.Log($"Contact {fingerIndex} détecté : {position}");
+    }
+
+    private void ContactReleased(int fingerIndex, Vector2 position)
+    {
+        Debug.Log($"Contact {fingerIndex} relâché : {position}");
+    }
 
     private void Update()
     {
+        var fingers = Touch.activeFingers;
 
+        string display = $"Doigts posés : {fingers.Count}\n\n";
+
+        for (int i = 0; i < fingers.Count; i++)
+        {
+            Finger finger = fingers[i];
+
+            Vector2 position = finger.currentTouch.screenPosition;
+
+            display +=
+                $"Finger {finger.index} : {position}\n";
+        }
+
+        text.text = display;
     }
 }

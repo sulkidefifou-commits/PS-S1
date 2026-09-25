@@ -16,7 +16,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "TouchPress",
+                    "name": "TouchMultiPress",
                     "type": "Button",
                     "id": "7f8fd93d-32f6-4dd5-997c-8230e550c940",
                     "expectedControlType": "",
@@ -52,8 +52,8 @@
                     "path": "<Touchscreen>/touch*/Press",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
-                    "action": "TouchPress",
+                    "groups": ";Touch",
+                    "action": "TouchMultiPress",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

@@ -102,7 +102,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""TouchPress"",
+                    ""name"": ""TouchMultiPress"",
                     ""type"": ""Button"",
                     ""id"": ""7f8fd93d-32f6-4dd5-997c-8230e550c940"",
                     ""expectedControlType"": """",
@@ -138,8 +138,8 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""path"": ""<Touchscreen>/touch*/Press"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""TouchPress"",
+                    ""groups"": "";Touch"",
+                    ""action"": ""TouchMultiPress"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -223,7 +223,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_TouchInput = m_Player.FindAction("TouchInput", throwIfNotFound: true);
-        m_Player_TouchPress = m_Player.FindAction("TouchPress", throwIfNotFound: true);
+        m_Player_TouchMultiPress = m_Player.FindAction("TouchMultiPress", throwIfNotFound: true);
         m_Player_TouchPosition = m_Player.FindAction("TouchPosition", throwIfNotFound: true);
     }
 
@@ -306,7 +306,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_TouchInput;
-    private readonly InputAction m_Player_TouchPress;
+    private readonly InputAction m_Player_TouchMultiPress;
     private readonly InputAction m_Player_TouchPosition;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
@@ -324,9 +324,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @TouchInput => m_Wrapper.m_Player_TouchInput;
         /// <summary>
-        /// Provides access to the underlying input action "Player/TouchPress".
+        /// Provides access to the underlying input action "Player/TouchMultiPress".
         /// </summary>
-        public InputAction @TouchPress => m_Wrapper.m_Player_TouchPress;
+        public InputAction @TouchMultiPress => m_Wrapper.m_Player_TouchMultiPress;
         /// <summary>
         /// Provides access to the underlying input action "Player/TouchPosition".
         /// </summary>
@@ -360,9 +360,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @TouchInput.started += instance.OnTouchInput;
             @TouchInput.performed += instance.OnTouchInput;
             @TouchInput.canceled += instance.OnTouchInput;
-            @TouchPress.started += instance.OnTouchPress;
-            @TouchPress.performed += instance.OnTouchPress;
-            @TouchPress.canceled += instance.OnTouchPress;
+            @TouchMultiPress.started += instance.OnTouchMultiPress;
+            @TouchMultiPress.performed += instance.OnTouchMultiPress;
+            @TouchMultiPress.canceled += instance.OnTouchMultiPress;
             @TouchPosition.started += instance.OnTouchPosition;
             @TouchPosition.performed += instance.OnTouchPosition;
             @TouchPosition.canceled += instance.OnTouchPosition;
@@ -380,9 +380,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @TouchInput.started -= instance.OnTouchInput;
             @TouchInput.performed -= instance.OnTouchInput;
             @TouchInput.canceled -= instance.OnTouchInput;
-            @TouchPress.started -= instance.OnTouchPress;
-            @TouchPress.performed -= instance.OnTouchPress;
-            @TouchPress.canceled -= instance.OnTouchPress;
+            @TouchMultiPress.started -= instance.OnTouchMultiPress;
+            @TouchMultiPress.performed -= instance.OnTouchMultiPress;
+            @TouchMultiPress.canceled -= instance.OnTouchMultiPress;
             @TouchPosition.started -= instance.OnTouchPosition;
             @TouchPosition.performed -= instance.OnTouchPosition;
             @TouchPosition.canceled -= instance.OnTouchPosition;
@@ -499,12 +499,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnTouchInput(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "TouchPress" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "TouchMultiPress" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnTouchPress(InputAction.CallbackContext context);
+        void OnTouchMultiPress(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "TouchPosition" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
