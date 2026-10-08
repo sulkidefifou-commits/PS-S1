@@ -1,8 +1,38 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class ActiveEntity : AbstractEntity
 {
+    [Serializable]
+    public struct Constrain
+    {
+        public bool X;
+        public bool Y;
+        public bool Z;
+
+        public bool HasNoConstrain()
+        {
+            if (!X && !Y && !Z) return true;
+            return false;
+        }
+        
+        public void ResetConstrain()
+        {
+            X = false;
+            Y = false;
+            Z = false;
+        }
+
+        public void SetConstrain(bool x, bool y, bool z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+        
+    }
+    
     [Header("Entity Physics Settings")]
     [SerializeField] private Vector3 initialVelocity = Vector3.zero;
     [SerializeField, Min(0.001f)] private float mass = 1f;
@@ -15,6 +45,36 @@ public class ActiveEntity : AbstractEntity
         protected set
         {
             mass = Mathf.Max(0.001f, value);
+        }
+    }
+    
+    [SerializeField] private Constrain positionConstraint = new Constrain();
+
+    public Constrain PositionConstraint
+    {
+        get
+        {
+            return positionConstraint;
+        }
+        set
+        {
+            positionConstraint = value;
+            
+            
+        }
+    }
+    
+    [SerializeField] private Constrain velocityConstraint = new Constrain();
+
+    public Constrain VelocityConstraint
+    {
+        get
+        {
+            return velocityConstraint;
+        }
+        set
+        {
+            velocityConstraint = value;
         }
     }
     
@@ -35,6 +95,7 @@ public class ActiveEntity : AbstractEntity
         {
             return visualFilter;
         }
+        
     }
 
 
@@ -66,7 +127,50 @@ public class ActiveEntity : AbstractEntity
         return true;
     }
 
-    public Vector3 Velocity { get; set; }
+    private Vector3 _velocity;
+    public Vector3 Velocity {
+        get
+        {
+            return _velocity;
+        }
+        set
+        {
+            if (VelocityConstraint.HasNoConstrain())
+            {
+                _velocity = value;
+                return;
+            }
+            
+            transform.position = new Vector3(
+                VelocityConstraint.X ? 1 : value.x,
+                VelocityConstraint.Y ? 1 : value.y,
+                VelocityConstraint.Z ? 1 : value.z
+            );
+        } 
+    }
+
+    public override Vector3 Position
+    {
+        get
+        {
+            return transform.position;
+        }
+        set
+        {
+            if (PositionConstraint.HasNoConstrain())
+            {
+                transform.position = value;
+                return;
+            }
+            
+            transform.position = new Vector3(
+                PositionConstraint.X ? transform.position.x : value.x,
+                PositionConstraint.Y ? transform.position.y : value.y,
+                PositionConstraint.Z ? transform.position.z : value.z
+                );
+            
+        }
+    }
 
     protected override void Awake()
     {
@@ -100,4 +204,8 @@ public class ActiveEntity : AbstractEntity
     }
 
 
+    void ChangeObjectConstaint(bool x, bool y, bool z)
+    {
+        
+    }
 }

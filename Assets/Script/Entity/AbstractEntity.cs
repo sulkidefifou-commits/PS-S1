@@ -24,7 +24,7 @@ public abstract class AbstractEntity : MonoBehaviour
         }
     }
 
-    public Vector3 Position { get; set; }
+    public virtual Vector3 Position { get; set; }
 
     protected virtual void Awake()
     {

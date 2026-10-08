@@ -432,6 +432,8 @@ public class PhysicsManager : MonoBehaviour
     {
         Vector3 position = entity.Position;
         Vector3 velocity = entity.Velocity;
+
+        
         float radius = entity.Radius;
         
         float minX = -halfWidth + radius;
@@ -490,6 +492,7 @@ public class PhysicsManager : MonoBehaviour
             }
         }
 
+        
         entity.Position = position;
         entity.Velocity = velocity;
         

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class GatshaBallEntity : ActiveEntity
 {
+    [Header("Gatsha Ball Settings")]
     [SerializeField, Min(1)] private int level = 1;
     public int Level
     {
