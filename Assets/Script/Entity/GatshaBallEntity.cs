@@ -18,6 +18,30 @@ public class GatshaBallEntity : ActiveEntity
         }
     }
     
+    public bool HasBeenHit { get; private set; }
+    public Vector3 LastHitPoint { get; private set; }
+
+    internal bool CanReceiveControlledHit => CanMerge && !HasBeenHit;
+
+    protected override void Awake()
+    {
+        SetObjectAllConstaint(false, false, true);
+        base.Awake();
+        Vector3 position = transform.position;
+        position.z = 0f;
+        transform.position = position;
+    }
+
+    internal bool TryReceiveControlledHit(Vector3 velocityChange, Vector3 contactPoint)
+    {
+        if (!CanReceiveControlledHit) return false;
+
+        Velocity += velocityChange;
+        HasBeenHit = true;
+        LastHitPoint = contactPoint;
+        return true;
+    }
+
     private bool _initialized;
     private bool _mergePending;
     
@@ -37,7 +61,11 @@ public class GatshaBallEntity : ActiveEntity
             return;
         }
 
+        SetObjectAllConstaint(false, false, true);
+        
         base.Start();
+
+        
     }
 
     internal bool Initialize(GameManager manager, int newLevel)
@@ -57,6 +85,8 @@ public class GatshaBallEntity : ActiveEntity
         Mass = state.Mass;
         Radius = state.Radius;
         _mergePending = false;
+        HasBeenHit = false;
+        LastHitPoint = Vector3.zero;
         _initialized = true;
         return true;
     }

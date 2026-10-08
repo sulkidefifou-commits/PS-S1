@@ -5,7 +5,7 @@ using UnityEngine;
 public class ActiveEntity : AbstractEntity
 {
     [Serializable]
-    public struct Constrain
+    public class Constrain
     {
         public bool X;
         public bool Y;
@@ -135,16 +135,10 @@ public class ActiveEntity : AbstractEntity
         }
         set
         {
-            if (VelocityConstraint.HasNoConstrain())
-            {
-                _velocity = value;
-                return;
-            }
-            
-            transform.position = new Vector3(
-                VelocityConstraint.X ? 1 : value.x,
-                VelocityConstraint.Y ? 1 : value.y,
-                VelocityConstraint.Z ? 1 : value.z
+            _velocity = new Vector3(
+                VelocityConstraint.X ? 0 : value.x,
+                VelocityConstraint.Y ? 0 : value.y,
+                VelocityConstraint.Z ? 0 : value.z
             );
         } 
     }
@@ -157,12 +151,6 @@ public class ActiveEntity : AbstractEntity
         }
         set
         {
-            if (PositionConstraint.HasNoConstrain())
-            {
-                transform.position = value;
-                return;
-            }
-            
             transform.position = new Vector3(
                 PositionConstraint.X ? transform.position.x : value.x,
                 PositionConstraint.Y ? transform.position.y : value.y,
@@ -171,6 +159,9 @@ public class ActiveEntity : AbstractEntity
             
         }
     }
+
+    public virtual bool UsesGravity => true;
+    public virtual bool IsKinematic => false;
 
     protected override void Awake()
     {
@@ -203,9 +194,17 @@ public class ActiveEntity : AbstractEntity
         if (_physicsManager != null) _physicsManager.Unregister(this);
     }
 
-
-    void ChangeObjectConstaint(bool x, bool y, bool z)
+    protected virtual void SetObjectAllConstaint(bool x, bool y, bool z)
     {
+        SetObjectConstaint(PositionConstraint, x, y, z);
         
+        SetObjectConstaint(VelocityConstraint, x, y, z);
+        
+        
+    }
+
+    protected virtual void SetObjectConstaint(Constrain constrain, bool x, bool y, bool z)
+    {
+        constrain.SetConstrain(x, y, z);
     }
 }
