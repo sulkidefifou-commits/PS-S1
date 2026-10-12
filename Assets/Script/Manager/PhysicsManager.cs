@@ -22,6 +22,9 @@ public class PhysicsManager : MonoBehaviour
     [Header("Physics Settings")]
     
     [SerializeField] private Vector3 gravity = new Vector3(0, -9.81f, 0);
+
+    public Vector3 Gravity => gravity;
+    public float SubstepDeltaTime => Time.fixedDeltaTime / Substeps;
     
     [SerializeField, Range(0f, 1f)] private float restitution = 1f;
     public float Restitution
@@ -32,7 +35,7 @@ public class PhysicsManager : MonoBehaviour
         }
     }
 
-    [SerializeField, Range(1, 20)] private int substeps = 3; //Limitation du nombre de pas effectuer tout les secondes
+    [SerializeField, Range(1, 20)] private int substeps = 3; 
     private int Substeps
     {
         get
@@ -41,7 +44,7 @@ public class PhysicsManager : MonoBehaviour
         }
     }
 
-    [SerializeField, Range(1, 20)] private int solverIterations = 6; //Nombre de collision tester tout les pas par entity
+    [SerializeField, Range(1, 20)] private int solverIterations = 6;
     private int SolverIterations
     {
         get
@@ -60,6 +63,12 @@ public class PhysicsManager : MonoBehaviour
     }
 
     [Header("World Collider Settings")]
+
+    [SerializeField] private bool useWorldBounds = true;
+
+    [SerializeField] private bool captureIncomingEntities = true;
+
+    [SerializeField] private Vector2 worldCenterXZ = Vector2.zero;
     
     [SerializeField] private bool useSpatialHashing = true;
     
@@ -68,6 +77,10 @@ public class PhysicsManager : MonoBehaviour
     [SerializeField, Min(0.001f)] private float halfDepth = 2.5f;
     
     [SerializeField] private float floorY = 0f;
+
+    [SerializeField] private bool useCeiling = false;
+
+    [SerializeField, Min(0.001f)] private float containerHeight = 6f;
     
 
     [Header("Debug")]
@@ -83,10 +96,12 @@ public class PhysicsManager : MonoBehaviour
     [SerializeField] private long lastAllPairTests;
     
     
-    private readonly List<ActiveEntity> _allActiveEntitiesRegistered = new List<ActiveEntity>(); //toute les entiter enregrister au pret du manager
-    private readonly List<ActiveEntity> _simulationEntities = new List<ActiveEntity>(128); //toute les entiter retenue, verifier, et active pour l'execussion dans l'update
+    private readonly List<ActiveEntity> _allActiveEntitiesRegistered = new List<ActiveEntity>(); 
+    private readonly List<ActiveEntity> _simulationEntities = new List<ActiveEntity>(128); 
     private readonly List<PassiveEntity> _allPassiveEntitiesRegistered = new List<PassiveEntity>();
     private readonly List<PassiveEntity> _passiveEntities = new List<PassiveEntity>(128);
+    private readonly List<SoftBodyEntity> _allSoftBodyEntitiesRegistered = new List<SoftBodyEntity>();
+    private readonly List<SoftBodyEntity> _softBodyEntities = new List<SoftBodyEntity>(8);
     private readonly SpatialHash3D _spatialHash = new SpatialHash3D(128);
     private Vector3[] _hashPositions = new Vector3[128];
 
@@ -149,6 +164,17 @@ public class PhysicsManager : MonoBehaviour
         _allPassiveEntitiesRegistered.Remove(entity);
     }
     
+    public void Register(SoftBodyEntity entity)
+    {
+        if (entity == null || _allSoftBodyEntitiesRegistered.Contains(entity)) return;
+        _allSoftBodyEntitiesRegistered.Add(entity);
+    }
+
+    public void Unregister(SoftBodyEntity entity)
+    {
+        _allSoftBodyEntitiesRegistered.Remove(entity);
+    }
+
     void FixedUpdate()
     {
         _collisionPairs.Clear();
@@ -158,15 +184,17 @@ public class PhysicsManager : MonoBehaviour
         int iterationCount = SolverIterations;
         float maxRadius = PrepareSimulationEntities();
         int entityCount = _simulationEntities.Count;
+        PrepareSoftBodyEntities();
+        int softBodyCount = _softBodyEntities.Count;
         ProcessControlledMotions();
         
         lastCellSize = entityCount > 0 ? (2f * maxRadius) : 0f;
         lastCandidatePairTests = 0;
         lastAllPairTests = ((long)entityCount * (entityCount - 1) / 2 + (long)entityCount * _passiveEntities.Count) * stepCount * iterationCount;
 
-        if (entityCount == 0) return;
+        if (entityCount == 0 && softBodyCount == 0) return;
         
-        float dt = Time.fixedDeltaTime/Substeps;
+        float dt = Time.fixedDeltaTime / stepCount;
 
         for (int step = 0; step < stepCount; step++)
         {
@@ -179,6 +207,8 @@ public class PhysicsManager : MonoBehaviour
                 entity.Position += entity.Velocity * dt;
             }
             
+            for (int i = 0; i < softBodyCount; i++) _softBodyEntities[i].BeginSubstep(dt, gravity);
+
             for (int iteration = 0; iteration < iterationCount; iteration++)
             {
                 if (useSpatialHashing)
@@ -194,7 +224,15 @@ public class PhysicsManager : MonoBehaviour
                 {
                     HandleWorldCollision(_simulationEntities[i]);
                 }
+
+                for (int i = 0; i < softBodyCount; i++)
+                {
+                    _softBodyEntities[i].SolveConstraints(dt);
+                    _softBodyEntities[i].SolveEnvironmentContacts();
+                }
             }
+
+            for (int i = 0; i < softBodyCount; i++) _softBodyEntities[i].EndSubstep(dt);
         }
 
         for (int i = 0; i < entityCount; i++)
@@ -204,9 +242,22 @@ public class PhysicsManager : MonoBehaviour
         }
 
 
+        for (int i = 0; i < softBodyCount; i++) _softBodyEntities[i].UpdateVisual();
+
         DispatchCollisions();
     }
     
+    private void PrepareSoftBodyEntities()
+    {
+        _softBodyEntities.Clear();
+        for (int i = 0; i < _allSoftBodyEntitiesRegistered.Count; i++)
+        {
+            SoftBodyEntity entity = _allSoftBodyEntitiesRegistered[i];
+            if (entity == null || !entity.isActiveAndEnabled) continue;
+            _softBodyEntities.Add(entity);
+        }
+    }
+
     private float PrepareSimulationEntities()
     {
         _simulationEntities.Clear();
@@ -227,12 +278,11 @@ public class PhysicsManager : MonoBehaviour
             PassiveEntity entity = _allPassiveEntitiesRegistered[i];
             if (entity == null || !entity.isActiveAndEnabled) continue;
 
-            entity.RefreshPosition();
+            entity.RefreshCollider();
             _passiveEntities.Add(entity);
-            maxRadius = Mathf.Max(maxRadius, entity.Radius);
         }
 
-        int colliderCount = _simulationEntities.Count + _passiveEntities.Count;
+        int colliderCount = _simulationEntities.Count;
         if (_hashPositions.Length < colliderCount)
         {
             Array.Resize(ref _hashPositions, Mathf.NextPowerOfTwo(colliderCount));
@@ -244,20 +294,14 @@ public class PhysicsManager : MonoBehaviour
     private void SolveSpatialContacts(float maxRadius)
     {
         int count = _simulationEntities.Count;
-        int colliderCount = count + _passiveEntities.Count;
-        if (count == 0 || colliderCount < 2) return;
+        if (count == 0) return;
 
         for (int i = 0; i < count; i++)
         {
             _hashPositions[i] = _simulationEntities[i].Position;
         }
         
-        for (int i = 0; i < _passiveEntities.Count; i++)
-        {
-            _hashPositions[count + i] = _passiveEntities[i].Position;
-        }
-
-        _spatialHash.Build(_hashPositions, colliderCount, lastCellSize);
+        _spatialHash.Build(_hashPositions, count, lastCellSize);
 
         for (int i = 0; i < count; i++)
         {
@@ -273,14 +317,13 @@ public class PhysicsManager : MonoBehaviour
                 if (j <= i) continue;
 
                 lastCandidatePairTests++;
-                if (j < count)
-                {
-                    HandleActiveCollision(firstEntity, _simulationEntities[j]);
-                }
-                else
-                {
-                    HandlePassiveCollision(firstEntity, _passiveEntities[j - count]);
-                }
+                HandleActiveCollision(firstEntity, _simulationEntities[j]);
+            }
+            
+            for (int j = 0; j < _passiveEntities.Count; j++)
+            {
+                lastCandidatePairTests++;
+                HandlePassiveCollision(firstEntity, _passiveEntities[j]);
             }
         }
     }
@@ -306,41 +349,22 @@ public class PhysicsManager : MonoBehaviour
     private void HandlePassiveCollision(ActiveEntity active, PassiveEntity passive)
     {
         if (active.IsKinematic) return;
+        Vector3 freePositionAxes = new Vector3(active.PositionConstraint.X ? 0f : 1f, active.PositionConstraint.Y ? 0f : 1f, active.PositionConstraint.Z ? 0f : 1f);
+        if (!passive.TryGetContact(active.Position, active.Radius, active.Velocity, freePositionAxes, out Vector3 normal, out float penetration, out Vector3 contactPoint)) return;
 
-        Vector3 delta = active.Position - passive.Position;
-        float distanceSquared = delta.sqrMagnitude;
-        float radiusSum = active.Radius + passive.Radius;
-        if (distanceSquared > radiusSum * radiusSum) return;
-
-        float distance;
-        Vector3 normal;
-        if (distanceSquared > 1e-12f)
-        {
-            distance = Mathf.Sqrt(distanceSquared);
-            normal = delta / distance;
-        }
-        else
-        {
-   
-            distance = 0f;
-            
-            float speedSquared = active.Velocity.sqrMagnitude;
-            
-            normal = speedSquared > 1e-12f ? -active.Velocity / Mathf.Sqrt(speedSquared) : Vector3.up;
-        }
-        
-        active.Position += normal * (radiusSum - distance);
-        
-        Vector3 contactPoint = passive.Position + normal * passive.Radius;
+        Vector3 correction = Vector3.Scale(normal, freePositionAxes);
+        float positionResponse = Vector3.Dot(correction, normal);
+        if (positionResponse > 0.000001f) active.Position += correction * (penetration / positionResponse);
         RecordCollision(active, passive, contactPoint);
 
         float normalVelocity = Vector3.Dot(active.Velocity, normal);
         
         if (normalVelocity >= 0f) return;
-
+        Vector3 velocityResponse = new Vector3(active.VelocityConstraint.X ? 0f : normal.x, active.VelocityConstraint.Y ? 0f : normal.y, active.VelocityConstraint.Z ? 0f : normal.z);
+        float normalResponse = Vector3.Dot(velocityResponse, normal);
+        if (normalResponse <= 0.000001f) return;
         float bounce = -normalVelocity < BounceThreshold ? 0f : restitution;
-        
-        active.Velocity -= normal * ((1f + bounce) * normalVelocity);
+        active.Velocity -= velocityResponse * ((1f + bounce) * normalVelocity / normalResponse);
     }
     
     private void HandleActiveCollision(ActiveEntity firstEntity, ActiveEntity nextEntity)
@@ -434,8 +458,6 @@ public class PhysicsManager : MonoBehaviour
 
     private void ProcessControlledMotions()
     {
-        // Une seule sphere de doigt : tester les balles directement garde ce trajet
-        // independant du hash, qui ne contient que les positions instantanees.
         for (int motionIndex = 0; motionIndex < _controlledMotions.Count; motionIndex++)
         {
             ControlledMotion motion = _controlledMotions[motionIndex];
@@ -454,8 +476,7 @@ public class PhysicsManager : MonoBehaviour
         _controlledMotions.Clear();
     }
 
-    private static bool TrySweepSphere(Vector3 from, Vector3 to, float radius,
-        Vector3 ballPosition, float ballRadius, out Vector3 normal, out Vector3 contactPoint)
+    private static bool TrySweepSphere(Vector3 from, Vector3 to, float radius, Vector3 ballPosition, float ballRadius, out Vector3 normal, out Vector3 contactPoint)
     {
         normal = Vector3.zero;
         contactPoint = Vector3.zero;
@@ -496,8 +517,7 @@ public class PhysicsManager : MonoBehaviour
         if (delta.sqrMagnitude > radiusSum * radiusSum) return;
 
         float distance = delta.magnitude;
-        // Les deplacements du doigt ont deja ete traites une seule fois par balayage.
-        // Ici, il reste uniquement une balle qui vient vers le doigt actuellement pose.
+
         Vector3 normal = distance > 1e-6f ? delta / distance : -ball.Velocity.normalized;
         if (normal.sqrMagnitude <= 1e-12f) return;
         Vector3 contactPoint = ball.Position - normal * ball.Radius;
@@ -521,16 +541,11 @@ public class PhysicsManager : MonoBehaviour
         float normalResponse = Vector3.Dot(response, normal);
         if (normalResponse <= 1e-6f) return false;
 
-        float bounce = closingSpeed < BounceThreshold ? 0f :
-            Mathf.Clamp01(restitution) * controller.HitRestitution;
-
-        // Mass de la sphere controlee = masse effective de frappe.
-        // Le doigt impose sa trajectoire : on ne lui applique pas de recul.
-        float impulse = (1f + bounce) * closingSpeed /
-            (1f / controller.Mass + normalResponse / ball.Mass);
+        float bounce = closingSpeed < BounceThreshold ? 0f : Mathf.Clamp01(restitution) * controller.HitRestitution;
+        
+        float impulse = (1f + bounce) * closingSpeed / (1f / controller.Mass + normalResponse / ball.Mass);
         Vector3 velocityChange = response * (impulse / ball.Mass);
-
-        // Le verrou est pose immediatement, avant les autres pas/iterations.
+        
         if (!ball.TryReceiveControlledHit(velocityChange, contactPoint)) return false;
         RecordCollision(controller, ball, contactPoint);
         return true;
@@ -566,7 +581,7 @@ public class PhysicsManager : MonoBehaviour
     private static void NotifyCollision(AbstractEntity receiver, AbstractEntity other, Vector3 point)
     {
         if (receiver == null || other == null || !receiver.isActiveAndEnabled) return;
-        // Un dernier segment valide peut etre traite apres le relachement du doigt.
+
         if (!other.isActiveAndEnabled && !(other is ControllableEntity)) return;
 
         receiver.OnCollision(other, point);
@@ -575,7 +590,13 @@ public class PhysicsManager : MonoBehaviour
 
     private void HandleWorldCollision(ActiveEntity entity)
     {
-        if (entity.IsKinematic) return;
+        if (!useWorldBounds || entity.IsKinematic) return;
+
+        if (!entity.CollidesWithWorld && !entity.IsContained)
+        {
+            if (!captureIncomingEntities || !FitsInsideWorld(entity.Position, entity.Radius)) return;
+        }
+        entity.IsContained = true;
 
         Vector3 position = entity.Position;
         Vector3 velocity = entity.Velocity;
@@ -583,53 +604,22 @@ public class PhysicsManager : MonoBehaviour
         
         float radius = entity.Radius;
         
-        float minX = -halfWidth + radius;
-        float maxX = halfWidth - radius;
+        float minX = worldCenterXZ.x - halfWidth + radius;
+        float maxX = worldCenterXZ.x + halfWidth - radius;
         
-        float minZ = -halfDepth + radius;
-        float maxZ = halfDepth - radius;
+        float minZ = worldCenterXZ.y - halfDepth + radius;
+        float maxZ = worldCenterXZ.y + halfDepth - radius;
         
         float minY = floorY + radius;
         
-        if (position.x < minX)
+        ConstrainWorldAxis(ref position.x, ref velocity.x, minX, maxX);
+        ConstrainWorldAxis(ref position.z, ref velocity.z, minZ, maxZ);
+        if (useCeiling)
         {
-            position.x = minX;
-            
-            if (velocity.x < 0f)
-            {
-                velocity.x = Bounce(velocity.x);
-            }
+            float maxY = floorY + Mathf.Max(0.001f, containerHeight) - radius;
+            ConstrainWorldAxis(ref position.y, ref velocity.y, minY, maxY);
         }
-        else if (position.x > maxX)
-        {
-            position.x = maxX;
-            
-            if (velocity.x > 0f)
-            {
-                velocity.x = Bounce(velocity.x);
-            }
-        }
-
-        if (position.z < minZ)
-        {
-            position.z = minZ;
-            
-            if (velocity.z < 0f)
-            {
-                velocity.z = Bounce(velocity.z);
-            }
-        }
-        else if (position.z > maxZ)
-        {
-            position.z = maxZ;
-            
-            if (velocity.z > 0f)
-            {
-                velocity.z = Bounce(velocity.z);
-            }
-        }
-        
-        if (position.y < minY)
+        else if (position.y < minY)
         {
             position.y = minY;
             
@@ -643,6 +633,187 @@ public class PhysicsManager : MonoBehaviour
         entity.Position = position;
         entity.Velocity = velocity;
         
+    }
+    
+    private const float SoftBodyContactSkin = 0.0001f;
+
+    internal void RefreshSoftBodyPassiveColliders()
+    {
+        for (int i = 0; i < _allPassiveEntitiesRegistered.Count; i++)
+        {
+            PassiveEntity passive = _allPassiveEntitiesRegistered[i];
+            if (passive != null && passive.isActiveAndEnabled) passive.RefreshCollider();
+        }
+    }
+
+    internal Vector3 ResolveSoftBodyMotion(Vector3 from, Vector3 target, Vector3 velocity,
+        float radius, bool withWorld, bool withPassives)
+    {
+        if (!withWorld && !withPassives) return target;
+        Vector3 position = from;
+        ProjectSoftBodyOverlaps(ref position, velocity, radius, withWorld, withPassives);
+        Vector3 remaining = target - position;
+
+        if (withPassives)
+        {
+            for (int slide = 0; slide < 4 && remaining.sqrMagnitude > 0.000000000001f; slide++)
+            {
+                float firstFraction = 1f;
+                Vector3 firstNormal = Vector3.zero;
+                bool found = false;
+                for (int i = 0; i < _allPassiveEntitiesRegistered.Count; i++)
+                {
+                    PassiveEntity passive = _allPassiveEntitiesRegistered[i];
+                    if (passive == null || !passive.isActiveAndEnabled) continue;
+                    if (!SweepSoftBodyParticle(passive, position, remaining, radius,
+                        out float fraction, out Vector3 normal) || fraction > firstFraction) continue;
+                    firstFraction = fraction;
+                    firstNormal = normal;
+                    found = true;
+                }
+
+                position += remaining * firstFraction;
+                if (!found) { remaining = Vector3.zero; break; }
+                remaining *= 1f - firstFraction;
+                float inward = Vector3.Dot(remaining, firstNormal);
+                if (inward < 0f) remaining -= firstNormal * inward;
+                else break;
+            }
+        }
+        else position = target;
+
+        ProjectSoftBodyOverlaps(ref position, velocity, radius, withWorld, withPassives);
+        return position;
+    }
+
+    private void ProjectSoftBodyOverlaps(ref Vector3 position, Vector3 velocity, float radius, bool withWorld, bool withPassives)
+    {
+
+        for (int pass = 0; pass < 4; pass++)
+        {
+            Vector3 before = position;
+            if (withPassives)
+            {
+                for (int i = 0; i < _allPassiveEntitiesRegistered.Count; i++)
+                {
+                    PassiveEntity passive = _allPassiveEntitiesRegistered[i];
+                    if (passive == null || !passive.isActiveAndEnabled) continue;
+                    if (passive.TryGetContact(position, radius, velocity, Vector3.one,
+                        out Vector3 normal, out float depth, out _) && depth > 0f)
+                        position += normal * (depth + SoftBodyContactSkin);
+                }
+            }
+            if (withWorld) position = ProjectSoftBodyPoint(position, radius);
+            if ((position - before).sqrMagnitude < 0.000000000001f) break;
+        }
+    }
+
+    private static bool SweepSoftBodyParticle(PassiveEntity passive, Vector3 from, Vector3 movement, float radius, out float fraction, out Vector3 normal)
+    {
+        fraction = 0f;
+        normal = Vector3.zero;
+        float travel = movement.magnitude;
+        if (travel <= 0.000001f) return false;
+        
+        for (int iteration = 0; iteration < 20; iteration++)
+        {
+            float extraRadius = travel * (1f - fraction) + SoftBodyContactSkin;
+            if (!passive.TryGetContact(from + movement * fraction, radius + extraRadius, movement, Vector3.one, out normal, out float depth, out _)) return false;
+
+            float gap = extraRadius - depth;
+            float approach = -Vector3.Dot(movement, normal);
+            if (approach <= 0.0000001f) return false;
+            if (gap <= SoftBodyContactSkin * 1.5f) return true;
+
+            float next = fraction + (gap - SoftBodyContactSkin) / approach;
+            if (next > 1f) return false;
+            fraction = Mathf.Clamp01(next);
+        }
+        return true;
+    }
+
+    internal void ClipSoftBodyPassiveVelocity(Vector3 position, ref Vector3 velocity, float radius)
+    {
+        for (int pass = 0; pass < 2; pass++)
+        {
+            for (int i = 0; i < _allPassiveEntitiesRegistered.Count; i++)
+            {
+                PassiveEntity passive = _allPassiveEntitiesRegistered[i];
+                if (passive == null || !passive.isActiveAndEnabled) continue;
+                if (!passive.TryGetContact(position, radius + SoftBodyContactSkin * 2f, velocity, Vector3.one, out Vector3 normal, out _, out _)) continue;
+                float inward = Vector3.Dot(velocity, normal);
+                if (inward < 0f) velocity -= normal * inward;
+            }
+        }
+    }
+    
+    internal Vector3 ProjectSoftBodyPoint(Vector3 position, float radius)
+    {
+        if (!useWorldBounds) return position;
+        GetSoftBodyWorldLimits(radius, out Vector3 min, out Vector3 max);
+        position.x = ClampSoftBodyAxis(position.x, min.x, max.x);
+        position.y = ClampSoftBodyAxis(position.y, min.y, max.y);
+        position.z = ClampSoftBodyAxis(position.z, min.z, max.z);
+        return position;
+    }
+
+    internal void ClipSoftBodyVelocity(Vector3 position, ref Vector3 velocity, float radius)
+    {
+        if (!useWorldBounds) return;
+        GetSoftBodyWorldLimits(radius, out Vector3 min, out Vector3 max);
+        ClipSoftBodyAxisVelocity(position.x, ref velocity.x, min.x, max.x);
+        ClipSoftBodyAxisVelocity(position.y, ref velocity.y, min.y, max.y);
+        ClipSoftBodyAxisVelocity(position.z, ref velocity.z, min.z, max.z);
+    }
+
+    private void GetSoftBodyWorldLimits(float radius, out Vector3 min, out Vector3 max)
+    {
+        min = new Vector3(worldCenterXZ.x - halfWidth + radius,
+            floorY + radius, worldCenterXZ.y - halfDepth + radius);
+        max = new Vector3(worldCenterXZ.x + halfWidth - radius,
+            useCeiling ? floorY + Mathf.Max(0.001f, containerHeight) - radius : float.PositiveInfinity,
+            worldCenterXZ.y + halfDepth - radius);
+    }
+
+    private static float ClampSoftBodyAxis(float position, float min, float max)
+    {
+        return min > max ? (min + max) * 0.5f : Mathf.Clamp(position, min, max);
+    }
+
+    private static void ClipSoftBodyAxisVelocity(float position, ref float velocity, float min, float max)
+    {
+        const float contactTolerance = 0.00001f;
+        if (min > max || (position <= min + contactTolerance && velocity < 0f)
+            || (position >= max - contactTolerance && velocity > 0f))
+            velocity = 0f;
+    }
+
+    private bool FitsInsideWorld(Vector3 position, float radius)
+    {
+        if (radius > halfWidth || radius > halfDepth) return false;
+        if (Mathf.Abs(position.x - worldCenterXZ.x) > halfWidth - radius ||
+            Mathf.Abs(position.z - worldCenterXZ.y) > halfDepth - radius ||
+            position.y < floorY + radius) return false;
+        return !useCeiling || position.y <= floorY + Mathf.Max(0.001f, containerHeight) - radius;
+    }
+
+    private void ConstrainWorldAxis(ref float position, ref float velocity, float min, float max)
+    {
+        if (min > max)
+        {
+            position = (min + max) * 0.5f;
+            velocity = 0f;
+        }
+        else if (position < min)
+        {
+            position = min;
+            if (velocity < 0f) velocity = Bounce(velocity);
+        }
+        else if (position > max)
+        {
+            position = max;
+            if (velocity > 0f) velocity = Bounce(velocity);
+        }
     }
     
     private static bool IsSimulated(ActiveEntity entity)
@@ -660,10 +831,31 @@ public class PhysicsManager : MonoBehaviour
     
     private void OnDrawGizmos()
     {
-        if (!enableDebug) return;
-        
+        if (!enableDebug || !useWorldBounds) return;
+        Color oldColor = Gizmos.color;
+        Matrix4x4 oldMatrix = Gizmos.matrix;
         Gizmos.color = floorGizmoColor;
-        Gizmos.DrawWireCube(new Vector3(0f, floorY, 0f), new Vector3(halfWidth * 2f, 0f, halfDepth * 2f));
+        Gizmos.matrix = Matrix4x4.identity;
+        float height = Mathf.Max(0.001f, containerHeight);
+        if (useCeiling)
+        {
+            Gizmos.DrawWireCube(new Vector3(worldCenterXZ.x, floorY + height * 0.5f, worldCenterXZ.y),
+                new Vector3(halfWidth * 2f, height, halfDepth * 2f));
+        }
+        else
+        {
+            Vector3 a = new Vector3(worldCenterXZ.x - halfWidth, floorY, worldCenterXZ.y - halfDepth);
+            Vector3 b = new Vector3(worldCenterXZ.x + halfWidth, floorY, worldCenterXZ.y - halfDepth);
+            Vector3 c = new Vector3(worldCenterXZ.x + halfWidth, floorY, worldCenterXZ.y + halfDepth);
+            Vector3 d = new Vector3(worldCenterXZ.x - halfWidth, floorY, worldCenterXZ.y + halfDepth);
+            Vector3 up = Vector3.up * height;
+            Gizmos.DrawLine(a, b); Gizmos.DrawLine(b, c);
+            Gizmos.DrawLine(c, d); Gizmos.DrawLine(d, a);
+            Gizmos.DrawLine(a, a + up); Gizmos.DrawLine(b, b + up);
+            Gizmos.DrawLine(c, c + up); Gizmos.DrawLine(d, d + up);
+        }
+        Gizmos.matrix = oldMatrix;
+        Gizmos.color = oldColor;
     }
 
 }

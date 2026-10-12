@@ -21,6 +21,12 @@ public class GatshaBallEntity : ActiveEntity
     public bool HasBeenHit { get; private set; }
     public Vector3 LastHitPoint { get; private set; }
 
+    public bool IsActionBall { get; internal set; }
+    internal bool IsInPool { get; set; }
+    internal float SpawnedAt { get; set; }
+
+    public override bool CollidesWithWorld => !IsActionBall;
+
     internal bool CanReceiveControlledHit => CanMerge && !HasBeenHit;
 
     protected override void Awake()
@@ -85,8 +91,12 @@ public class GatshaBallEntity : ActiveEntity
         Mass = state.Mass;
         Radius = state.Radius;
         _mergePending = false;
+        IsActionBall = false;
+        IsInPool = false;
         HasBeenHit = false;
         LastHitPoint = Vector3.zero;
+        SetObjectAllConstaint(false, false, true);
+        Velocity = Vector3.zero;
         _initialized = true;
         return true;
     }

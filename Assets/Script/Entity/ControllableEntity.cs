@@ -41,12 +41,9 @@ public class ControllableEntity : ActiveEntity
         worldPosition.z = 0f;
         Vector3 from = Position;
         Vector3 displacement = worldPosition - from;
-        Velocity = Vector3.ClampMagnitude(
-            displacement / Mathf.Max(0.001f, elapsedTime),
-            Mathf.Max(0.01f, maxHitSpeed));
+        Velocity = Vector3.ClampMagnitude(displacement / Mathf.Max(0.001f, elapsedTime), Mathf.Max(0.01f, maxHitSpeed));
 
-        if (displacement.sqrMagnitude > 1e-12f)
-            _physicsManager.QueueControlledMotion(this, from, worldPosition, Velocity);
+        if (displacement.sqrMagnitude > 1e-12f) _physicsManager.QueueControlledMotion(this, from, worldPosition, Velocity);
         
         Position = worldPosition;
     }

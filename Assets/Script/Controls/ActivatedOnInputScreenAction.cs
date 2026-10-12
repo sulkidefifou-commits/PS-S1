@@ -25,7 +25,7 @@ public class ActivatedOnInputScreenAction : MonoBehaviour
     {
         if (inputManager == null || inputCamera == null)
         {
-            Debug.LogError(name + " : renseigner Input Manager et Input Camera.", this);
+            Debug.LogError(name + " : renseigner Input Manager et input Camera", this);
             enabled = false;
             return;
         }

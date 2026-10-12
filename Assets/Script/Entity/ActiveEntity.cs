@@ -78,54 +78,6 @@ public class ActiveEntity : AbstractEntity
         }
     }
     
-    [Header("Visual Settings")]
-    [SerializeField] private MeshRenderer visualRenderer;
-    public MeshRenderer VisualRenderer
-    {
-        get
-        {
-            return visualRenderer;
-        }
-    }
-    
-    [SerializeField] private MeshFilter visualFilter;
-    public MeshFilter VisualFilter
-    {
-        get
-        {
-            return visualFilter;
-        }
-        
-    }
-
-
-    protected bool SetVisual(Mesh sourceMesh, Material sourceMaterial, float scale)
-    {
-        if (visualFilter == null || visualRenderer == null)
-        {
-            Debug.LogError(name + " :il faut renseigner Visual Filter et Visual Renderer sur le prefab de boule", this);
-            return false;
-        }
-
-        if (sourceMesh == null || sourceMaterial == null)
-        {
-            Debug.LogError(name + " : il faut fournir un Mesh et un Renderer de base", this);
-            return false;
-        }
-
-        Transform visualTransform = visualFilter.transform;
-        if (visualRenderer.transform != visualTransform || (visualTransform != transform && !visualTransform.IsChildOf(transform)))
-        {
-            Debug.LogError(name + " : les composant visuel doivent etre sur le meme objet de cette boule", this);
-            return false;
-        }
-
-        visualFilter.sharedMesh = sourceMesh;
-        visualRenderer.material = sourceMaterial;
-        visualTransform.localScale = Vector3.one * scale;
-        visualRenderer.enabled = true;
-        return true;
-    }
 
     private Vector3 _velocity;
     public Vector3 Velocity {
@@ -162,6 +114,9 @@ public class ActiveEntity : AbstractEntity
 
     public virtual bool UsesGravity => true;
     public virtual bool IsKinematic => false;
+    public virtual bool CollidesWithWorld => true;
+    
+    public bool IsContained { get; internal set; }
 
     protected override void Awake()
     {
@@ -172,7 +127,9 @@ public class ActiveEntity : AbstractEntity
 
     protected virtual void OnEnable()
     {
+        IsContained = false;
         RefreshPosition();
+        if (_physicsManager == null) _physicsManager = PhysicsManager.Instance;
         if (_physicsManager != null) _physicsManager.Register(this);
     }
 

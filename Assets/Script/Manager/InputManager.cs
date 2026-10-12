@@ -27,6 +27,7 @@ public class InputManager : MonoBehaviour
 
     private void Awake()
     {
+        Application.targetFrameRate = 60;
         playerInputActions = new PlayerInputActions();
     }
 
@@ -144,7 +145,7 @@ public class InputManager : MonoBehaviour
 
         if (text == null) return;
         _display.Clear();
-        _display.Append("Doigts poses : ").Append(fingers.Count).Append('\n');
+        _display.Append("Doigts poser : ").Append(fingers.Count).Append('\n');
         for (int i = 0; i < fingers.Count; i++)
             _display.Append("Finger ").Append(fingers[i].index).Append(" : ")
                 .Append(fingers[i].currentTouch.screenPosition).Append('\n');
