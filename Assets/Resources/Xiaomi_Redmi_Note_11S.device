@@ -1,0 +1,132 @@
+{
+    "friendlyName": "Xiaomi Redmi Note 11S",
+    "version": 1,
+    "screens": [
+        {
+            "width": 1080,
+            "height": 2400,
+            "navigationBarHeight": 0,
+            "dpi": 409.0,
+            "orientations": [
+                {
+                    "orientation": 1,
+                    "safeArea": {
+                        "serializedVersion": "2",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 1080.0,
+                        "height": 2320.0
+                    },
+                    "cutouts": [
+                        {
+                            "serializedVersion": "2",
+                            "x": 508.0,
+                            "y": 2320.0,
+                            "width": 64.0,
+                            "height": 64.0
+                        }
+                    ]
+                },
+                {
+                    "orientation": 2,
+                    "safeArea": {
+                        "serializedVersion": "2",
+                        "x": 0.0,
+                        "y": 80.0,
+                        "width": 1080.0,
+                        "height": 2320.0
+                    },
+                    "cutouts": [
+                        {
+                            "serializedVersion": "2",
+                            "x": 508.0,
+                            "y": 16.0,
+                            "width": 64.0,
+                            "height": 64.0
+                        }
+                    ]
+                },
+                {
+                    "orientation": 3,
+                    "safeArea": {
+                        "serializedVersion": "2",
+                        "x": 80.0,
+                        "y": 0.0,
+                        "width": 2320.0,
+                        "height": 1080.0
+                    },
+                    "cutouts": [
+                        {
+                            "serializedVersion": "2",
+                            "x": 16.0,
+                            "y": 508.0,
+                            "width": 64.0,
+                            "height": 64.0
+                        }
+                    ]
+                },
+                {
+                    "orientation": 4,
+                    "safeArea": {
+                        "serializedVersion": "2",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 2320.0,
+                        "height": 1080.0
+                    },
+                    "cutouts": [
+                        {
+                            "serializedVersion": "2",
+                            "x": 2320.0,
+                            "y": 508.0,
+                            "width": 64.0,
+                            "height": 64.0
+                        }
+                    ]
+                }
+            ],
+            "presentation": {
+                "overlayPath": "Xiaomi_Redmi_Note_11S_Overlay.png",
+                "borderSize": {
+                    "x": 55.0,
+                    "y": 69.0,
+                    "z": 55.0,
+                    "w": 107.0
+                }
+            }
+        }
+    ],
+    "systemInfo": {
+        "deviceModel": "Xiaomi 2201117SG",
+        "deviceType": 1,
+        "operatingSystem": "Android OS 11 / API-30 (RKQ1.201004.002/V13.0.3.0.RKGMIXM)",
+        "operatingSystemFamily": 0,
+        "processorCount": 8,
+        "processorFrequency": 2050,
+        "processorType": "ARMv8",
+        "supportsAccelerometer": true,
+        "supportsAudio": true,
+        "supportsGyroscope": true,
+        "supportsLocationService": true,
+        "supportsVibration": true,
+        "systemMemorySize": 5924,
+        "graphicsDependentData": [
+            {
+                "graphicsDeviceType": 11,
+                "graphicsMemorySize": 0,
+                "graphicsDeviceName": "Mali-G57 MC2",
+                "graphicsDeviceVendor": "ARM",
+                "graphicsUVStartsAtTop": true,
+                "graphicsDeviceVersion": "OpenGL ES 3.2",
+                "graphicsShaderLevel": 45,
+                "graphicsMultiThreaded": true,
+                "supportsComputeShaders": true,
+                "supportsGeometryShaders": true,
+                "supportsTessellationShaders": false,
+                "supportsInstancing": true,
+                "maxTextureSize": 8192,
+                "maxCubemapSize": 8192
+            }
+        ]
+    }
+}

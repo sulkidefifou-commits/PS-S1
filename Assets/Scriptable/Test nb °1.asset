@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe503c5abfef8234e982ec4168a0e89a, type: 3}
   m_Name: "Test nb \xB01"
   m_EditorClassIdentifier: Assembly-CSharp::GatshaActions
-  UseMinimumActionCount: 0
-  MinimumActionCount: 0
-  UseMaximumActionCount: 0
+  UseMinimumActionCount: 1
+  MinimumActionCount: 5
+  UseMaximumActionCount: 1
   MaximumActionCount: 20
   Actions:
   - DelayBefore:
