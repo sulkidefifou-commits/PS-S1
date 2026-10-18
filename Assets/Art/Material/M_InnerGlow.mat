@@ -115,7 +115,7 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
-    - _Fresnel_Power: 4
+    - _Fresnel_Power: -1.74
     - _Glitter_Offset: 0.04
     - _GlossMapScale: 0
     - _Glossiness: 0

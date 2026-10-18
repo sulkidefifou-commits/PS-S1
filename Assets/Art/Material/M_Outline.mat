@@ -124,7 +124,7 @@ Material:
     - _InnerOutlineCutoof: 0.1
     - _Metallic: 0
     - _OcclusionStrength: 1
-    - _OutlineThickness: 0.000012
+    - _OutlineThickness: 0.000018
     - _Parallax: 0.005
     - _QueueControl: 0
     - _QueueOffset: 0
