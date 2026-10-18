@@ -102,6 +102,10 @@ public class PhysicsManager : MonoBehaviour
     private readonly List<PassiveEntity> _passiveEntities = new List<PassiveEntity>(128);
     private readonly List<SoftBodyEntity> _allSoftBodyEntitiesRegistered = new List<SoftBodyEntity>();
     private readonly List<SoftBodyEntity> _softBodyEntities = new List<SoftBodyEntity>(8);
+    private readonly List<DetectionEntity> _allDetectionEntitiesRegistered = new List<DetectionEntity>();
+    private readonly List<DetectionEntity> _detectionEntities = new List<DetectionEntity>(16);
+    private readonly List<MonoBehaviour> _detectionCandidates = new List<MonoBehaviour>(128);
+
     private readonly SpatialHash3D _spatialHash = new SpatialHash3D(128);
     private Vector3[] _hashPositions = new Vector3[128];
 
@@ -175,6 +179,57 @@ public class PhysicsManager : MonoBehaviour
         _allSoftBodyEntitiesRegistered.Remove(entity);
     }
 
+    public void Register(DetectionEntity entity)
+    {
+        if (entity == null || _allDetectionEntitiesRegistered.Contains(entity)) return;
+        _allDetectionEntitiesRegistered.Add(entity);
+    }
+
+    public void Unregister(DetectionEntity entity)
+    {
+        _allDetectionEntitiesRegistered.Remove(entity);
+    }
+
+    private void ProcessDetections()
+    {
+        if (_allDetectionEntitiesRegistered.Count == 0) return;
+        _detectionEntities.Clear();
+        _detectionCandidates.Clear();
+        for (int i = 0; i < _allDetectionEntitiesRegistered.Count; i++)
+        {
+            DetectionEntity zone = _allDetectionEntitiesRegistered[i];
+            if (zone == null || !zone.isActiveAndEnabled) continue;
+            zone.RefreshDetectionShape();
+            _detectionEntities.Add(zone);
+            _detectionCandidates.Add(zone);
+        }
+        AddDetectionCandidates(_allActiveEntitiesRegistered);
+        AddDetectionCandidates(_allPassiveEntitiesRegistered);
+        AddDetectionCandidates(_allSoftBodyEntitiesRegistered);
+
+        // Calculer toutes les zones avant les callbacks, qui peuvent detruire,
+        // creer ou desactiver des entites et donc modifier les registres.
+        for (int i = 0; i < _detectionEntities.Count; i++)
+            _detectionEntities[i].Evaluate(_detectionCandidates);
+        for (int i = 0; i < _detectionEntities.Count; i++)
+        {
+            DetectionEntity zone = _detectionEntities[i];
+            if (zone != null && zone.isActiveAndEnabled) zone.DispatchEvents();
+        }
+        // Ne pas conserver les references aux objets detruits par un evenement.
+        _detectionCandidates.Clear();
+        _detectionEntities.Clear();
+    }
+
+    private void AddDetectionCandidates<T>(List<T> entities) where T : MonoBehaviour
+    {
+        for (int i = 0; i < entities.Count; i++)
+        {
+            T entity = entities[i];
+            if (entity != null && entity.isActiveAndEnabled) _detectionCandidates.Add(entity);
+        }
+    }
+
     void FixedUpdate()
     {
         _collisionPairs.Clear();
@@ -192,7 +247,11 @@ public class PhysicsManager : MonoBehaviour
         lastCandidatePairTests = 0;
         lastAllPairTests = ((long)entityCount * (entityCount - 1) / 2 + (long)entityCount * _passiveEntities.Count) * stepCount * iterationCount;
 
-        if (entityCount == 0 && softBodyCount == 0) return;
+        if (entityCount == 0 && softBodyCount == 0)
+        {
+            ProcessDetections();
+            return;
+        }
         
         float dt = Time.fixedDeltaTime / stepCount;
 
@@ -245,6 +304,7 @@ public class PhysicsManager : MonoBehaviour
         for (int i = 0; i < softBodyCount; i++) _softBodyEntities[i].UpdateVisual();
 
         DispatchCollisions();
+        ProcessDetections();
     }
     
     private void PrepareSoftBodyEntities()

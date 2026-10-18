@@ -266,6 +266,26 @@ public class SoftBodyEntity : MonoBehaviour
         }
     }
 
+    // Detection du volume de la cage deformee, sans modifier la simulation.
+    internal bool OverlapsDetection(DetectionGeometry.Shape zone)
+    {
+        if (!_initialized || _data == null || _positions.Length == 0) return false;
+        Vector3 min = _positions[0], max = _positions[0];
+        for (int i = 1; i < _positions.Length; i++)
+        {
+            min = Vector3.Min(min, _positions[i]);
+            max = Vector3.Max(max, _positions[i]);
+        }
+        if (!zone.Bounds.Intersects(new Bounds((min + max) * 0.5f, max - min))) return false;
+        for (int offset = 0; offset < _data.Tetrahedra.Length; offset += 4)
+        {
+            if (DetectionGeometry.OverlapsTetrahedron(zone,
+                _positions[_data.Tetrahedra[offset]], _positions[_data.Tetrahedra[offset + 1]],
+                _positions[_data.Tetrahedra[offset + 2]], _positions[_data.Tetrahedra[offset + 3]])) return true;
+        }
+        return false;
+    }
+
     internal void UpdateVisual()
     {
         if (!_initialized || _mesh == null) return;
