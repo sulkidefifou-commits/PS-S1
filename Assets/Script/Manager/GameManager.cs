@@ -365,7 +365,7 @@ public class GameManager : MonoBehaviour
         {
             _instance = this;
             
-            DontDestroyOnLoad(gameObject);
+   
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
     }
