@@ -3298,7 +3298,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhysicsManager
   gravity: {x: 0, y: -9.81, z: 0}
-  restitution: 0.6
+  restitution: 0.4
   substeps: 3
   solverIterations: 6
   bounceThreshold: 0.5
@@ -3600,19 +3600,43 @@ MonoBehaviour:
   ballStates:
   - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
     ModelMatriel: {fileID: 2100000, guid: 35c34d73d4896af4c842f2fa14198e64, type: 2}
-    Scale: 1
+    Scale: 1.48
     Mass: 1
   - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
     ModelMatriel: {fileID: 2100000, guid: 2338f508c63ad894b93467e8a82dd5c9, type: 2}
-    Scale: 2
+    Scale: 1.888
     Mass: 1
   - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
     ModelMatriel: {fileID: 2100000, guid: 4d9436c24597ec448862d2a656515f8a, type: 2}
-    Scale: 3
+    Scale: 2.128
     Mass: 1
   - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
     ModelMatriel: {fileID: 2100000, guid: b856882dfacc3874ca523a57ed4eeed7, type: 2}
-    Scale: 4
+    Scale: 2.752
+    Mass: 1
+  - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    ModelMatriel: {fileID: 2100000, guid: ab9ba6090677b9543b717b135214b703, type: 2}
+    Scale: 3.736
+    Mass: 1
+  - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    ModelMatriel: {fileID: 2100000, guid: 201d2dd6a194a1245ae51cbc16e8a290, type: 2}
+    Scale: 4.448
+    Mass: 1
+  - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    ModelMatriel: {fileID: 2100000, guid: b0cf6180aaa0c6b4f86a6bf4a9ed18af, type: 2}
+    Scale: 5.464
+    Mass: 1
+  - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    ModelMatriel: {fileID: 2100000, guid: 85ebf44771addeb40af094fdbf9161ba, type: 2}
+    Scale: 6.792
+    Mass: 1
+  - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    ModelMatriel: {fileID: 2100000, guid: 09358d88facedf64796b3475bb958ad3, type: 2}
+    Scale: 7.456
+    Mass: 1
+  - ModelMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+    ModelMatriel: {fileID: 2100000, guid: 581999fec7d6e174eb529e7aa2bc894d, type: 2}
+    Scale: 8
     Mass: 1
   gatshaActions:
   - {fileID: 11400000, guid: 14f180d4e1688364785a6c2711ff3fd2, type: 2}
