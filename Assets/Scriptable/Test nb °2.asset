@@ -35,7 +35,7 @@ MonoBehaviour:
       Max: 0.5
     InertiaPoint:
       Mode: 0
-      Value: {x: 2, y: 25}
+      Value: {x: 8, y: 30}
       Min: {x: -1, y: 2}
       Max: {x: 1, y: 4}
   - DelayBefore:
@@ -56,7 +56,7 @@ MonoBehaviour:
       Max: 0.5
     InertiaPoint:
       Mode: 0
-      Value: {x: 3, y: 30}
+      Value: {x: 8, y: 30}
       Min: {x: -1, y: 2}
       Max: {x: 1, y: 4}
   - DelayBefore:
@@ -77,6 +77,6 @@ MonoBehaviour:
       Max: 0.5
     InertiaPoint:
       Mode: 0
-      Value: {x: -2, y: 27}
+      Value: {x: 8, y: 30}
       Min: {x: -1, y: 2}
       Max: {x: 1, y: 4}

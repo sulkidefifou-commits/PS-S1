@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe503c5abfef8234e982ec4168a0e89a, type: 3}
   m_Name: "Test nb \xB01"
   m_EditorClassIdentifier: Assembly-CSharp::GatshaActions
-  UseMinimumActionCount: 1
+  UseMinimumActionCount: 0
   MinimumActionCount: 5
-  UseMaximumActionCount: 1
+  UseMaximumActionCount: 0
   MaximumActionCount: 20
   Actions:
   - DelayBefore:
@@ -25,6 +25,27 @@ MonoBehaviour:
     InitialLevel:
       Mode: 0
       Value: 3
+      Min: 0
+      Max: 0
+    Side: 2
+    SpawnOffset:
+      Mode: 0
+      Value: 13
+      Min: 0
+      Max: 0
+    InertiaPoint:
+      Mode: 0
+      Value: {x: 8, y: 30}
+      Min: {x: 0, y: 0}
+      Max: {x: 0, y: 0}
+  - DelayBefore:
+      Mode: 0
+      Value: 3
+      Min: 0
+      Max: 0
+    InitialLevel:
+      Mode: 0
+      Value: 2
       Min: 0
       Max: 0
     Side: 2
