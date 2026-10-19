@@ -332,8 +332,9 @@ GameObject:
   - component: {fileID: 212097001}
   - component: {fileID: 212097000}
   - component: {fileID: 212096999}
+  - component: {fileID: 212097002}
   m_Layer: 0
-  m_Name: InpuManager
+  m_Name: InputManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -398,6 +399,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &212097002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 212096998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f345ac8191c82f44bbc38b39fe83c448, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GatshaSlingshotController
+  gameplayCamera: {fileID: 893496322}
+  inputManager: {fileID: 212096999}
+  grabMarginPixels: 24
+  minimumGrabRadiusPixels: 36
+  motionAssistSeconds: 0.06
+  maximumMotionMarginPixels: 60
+  launchSpeedPerUnit: 8
+  dragDeadZonePixels: 6
+  visualAngleOffset: 0
+  aimMaterial: {fileID: 2100000, guid: 581999fec7d6e174eb529e7aa2bc894d, type: 2}
+  elasticColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  arrowColor: {r: 0.2, g: 1, b: 0.65, a: 1}
+  lineWidth: 0.1
+  arrowHeadLength: 0.18
 --- !u!1 &221683644
 GameObject:
   m_ObjectHideFlags: 0
@@ -1015,143 +1042,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &916924689
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 916924694}
-  - component: {fileID: 916924693}
-  - component: {fileID: 916924692}
-  - component: {fileID: 916924691}
-  - component: {fileID: 916924690}
-  m_Layer: 0
-  m_Name: ControllableEntity
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!23 &916924690
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 916924689}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &916924691
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 916924689}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &916924692
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 916924689}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0267c5edf8dcf3645be95adf9e2333e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ActivatedOnInputScreenAction
-  inputManager: {fileID: 212096999}
-  inputCamera: {fileID: 893496322}
-  sphereRenderer: {fileID: 916924690}
---- !u!114 &916924693
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 916924689}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5bc476163e2c3be4bafb698dbf6f65ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ControllableEntity
-  _radius: 1.5
-  visualRenderer: {fileID: 916924690}
-  visualFilter: {fileID: 916924691}
-  enableDebug: 1
-  debugOnContact: 0
-  colliderGizmoColor: {r: 1, g: 0, b: 0, a: 1}
-  initialVelocity: {x: 0, y: 0, z: 0}
-  mass: 1
-  positionConstraint:
-    X: 0
-    Y: 0
-    Z: 0
-  velocityConstraint:
-    X: 0
-    Y: 0
-    Z: 0
-  hitRestitution: 0.8
-  maxHitSpeed: 35
---- !u!4 &916924694
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 916924689}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.2, y: 4.74, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 1
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &978003191
 GameObject:
   m_ObjectHideFlags: 0
@@ -1736,6 +1626,10 @@ MonoBehaviour:
   restitution: 0.4
   substeps: 3
   solverIterations: 6
+  adaptiveSubsteps: 1
+  maximumAdaptiveSubsteps: 128
+  maximumTravelPerRadius: 0.5
+  lastSubstepCount: 0
   bounceThreshold: 0.5
   useWorldBounds: 1
   captureIncomingEntities: 1
@@ -2022,7 +1916,7 @@ GameObject:
   - component: {fileID: 1783550728}
   - component: {fileID: 1783550727}
   m_Layer: 0
-  m_Name: GameManager
+  m_Name: SuikaManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2371,7 +2265,6 @@ SceneRoots:
   - {fileID: 893496323}
   - {fileID: 144390620}
   - {fileID: 212097001}
-  - {fileID: 916924694}
   - {fileID: 1570971261}
   - {fileID: 221683645}
   - {fileID: 1783550728}

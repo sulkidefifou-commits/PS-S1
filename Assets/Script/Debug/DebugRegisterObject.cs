@@ -12,11 +12,11 @@ public class DebugRegisterObject : MonoBehaviour
         
         if (object1 && !object2)
         {
-            GameManager.Instance.RegisterDebugObject1(gameObject);
+            SuikaManager.Instance.RegisterDebugObject1(gameObject);
         }
         else if (object2 && !object1)
         {
-            GameManager.Instance.RegisterDebugObject2(gameObject);
+            SuikaManager.Instance.RegisterDebugObject2(gameObject);
         }
         
     }

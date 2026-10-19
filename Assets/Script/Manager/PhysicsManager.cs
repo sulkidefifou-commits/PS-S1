@@ -53,6 +53,12 @@ public class PhysicsManager : MonoBehaviour
         }
     }
     
+    [Header("Fast Ball Collisions")]
+    [SerializeField] private bool adaptiveSubsteps = true;
+    [SerializeField, Range(20, 256)] private int maximumAdaptiveSubsteps = 128;
+    [SerializeField, Range(0.1f, 1f)] private float maximumTravelPerRadius = 0.5f;
+    [SerializeField] private int lastSubstepCount;
+
     [SerializeField, Min(0f)] private float bounceThreshold = 0.5f;
     private float BounceThreshold
     {
@@ -97,6 +103,9 @@ public class PhysicsManager : MonoBehaviour
     
     
     private readonly List<ActiveEntity> _allActiveEntitiesRegistered = new List<ActiveEntity>(); 
+    // Lecture seule, utilisee pour choisir une boule au debut du toucher.
+    public IReadOnlyList<ActiveEntity> ActiveEntities => _allActiveEntitiesRegistered;
+
     private readonly List<ActiveEntity> _simulationEntities = new List<ActiveEntity>(128); 
     private readonly List<PassiveEntity> _allPassiveEntitiesRegistered = new List<PassiveEntity>();
     private readonly List<PassiveEntity> _passiveEntities = new List<PassiveEntity>(128);
@@ -111,16 +120,6 @@ public class PhysicsManager : MonoBehaviour
 
     private readonly HashSet<ulong> _collisionPairs = new HashSet<ulong>();
     private readonly List<CollisionContact> _pendingContacts = new List<CollisionContact>(128);
-
-    private readonly List<ControlledMotion> _controlledMotions = new List<ControlledMotion>(32);
-
-    private struct ControlledMotion
-    {
-        public ControllableEntity Source;
-        public Vector3 From;
-        public Vector3 To;
-        public Vector3 Velocity;
-    }
 
     private struct CollisionContact
     {
@@ -235,13 +234,13 @@ public class PhysicsManager : MonoBehaviour
         _collisionPairs.Clear();
         _pendingContacts.Clear();
 
-        int stepCount = Substeps;
         int iterationCount = SolverIterations;
         float maxRadius = PrepareSimulationEntities();
+        int stepCount = GetAdaptiveSubstepCount();
+        lastSubstepCount = stepCount;
         int entityCount = _simulationEntities.Count;
         PrepareSoftBodyEntities();
         int softBodyCount = _softBodyEntities.Count;
-        ProcessControlledMotions();
         
         lastCellSize = entityCount > 0 ? (2f * maxRadius) : 0f;
         lastCandidatePairTests = 0;
@@ -307,6 +306,27 @@ public class PhysicsManager : MonoBehaviour
         ProcessDetections();
     }
     
+    private int GetAdaptiveSubstepCount()
+    {
+        int baseline = Substeps;
+        if (!adaptiveSubsteps || _simulationEntities.Count == 0) return baseline;
+        float minRadius = float.PositiveInfinity;
+        float maxSpeed = 0f;
+        for (int i = 0; i < _simulationEntities.Count; i++)
+        {
+            ActiveEntity entity = _simulationEntities[i];
+            minRadius = Mathf.Min(minRadius, entity.Radius);
+            if (!entity.IsKinematic) maxSpeed = Mathf.Max(maxSpeed, entity.Velocity.magnitude);
+        }
+        // Facteur 2 : deux boules peuvent se rapprocher simultanement.
+        float travel = (2f * maxSpeed + gravity.magnitude * Time.fixedDeltaTime) * Time.fixedDeltaTime;
+        float allowedTravel = Mathf.Max(0.0001f, minRadius * maximumTravelPerRadius);
+        int limit = Mathf.Max(baseline, maximumAdaptiveSubsteps);
+        float required = travel / allowedTravel;
+        if (required >= limit) return limit;
+        return Mathf.Clamp(Mathf.CeilToInt(required), baseline, limit);
+    }
+
     private void PrepareSoftBodyEntities()
     {
         _softBodyEntities.Clear();
@@ -429,17 +449,6 @@ public class PhysicsManager : MonoBehaviour
     
     private void HandleActiveCollision(ActiveEntity firstEntity, ActiveEntity nextEntity)
     {
-        if (firstEntity is ControllableEntity firstController)
-        {
-            HandleControlledOverlap(firstController, nextEntity as GatshaBallEntity);
-            return;
-        }
-        if (nextEntity is ControllableEntity nextController)
-        {
-            HandleControlledOverlap(nextController, firstEntity as GatshaBallEntity);
-            return;
-        }
-
         Vector3 delta = nextEntity.Position - firstEntity.Position;
         float distanceSquared = delta.sqrMagnitude;
         float radiusSum = firstEntity.Radius + nextEntity.Radius;
@@ -472,143 +481,40 @@ public class PhysicsManager : MonoBehaviour
             }
         }
 
-        float m1 = firstEntity.Mass;
-        float m2 = nextEntity.Mass;
-        
+        // Une boule tenue a une masse inverse nulle : elle ne recoit
+        // ni correction de position ni impulsion. L'autre reagit normalement.
+        float inverseMass1 = firstEntity.IsKinematic ? 0f : 1f / firstEntity.Mass;
+        float inverseMass2 = nextEntity.IsKinematic ? 0f : 1f / nextEntity.Mass;
+        Vector3 positionResponse1 = FreeAxes(normal, firstEntity.PositionConstraint) * inverseMass1;
+        Vector3 positionResponse2 = FreeAxes(normal, nextEntity.PositionConstraint) * inverseMass2;
+        float positionResponse = Vector3.Dot(normal, positionResponse1 + positionResponse2);
         float penetration = radiusSum - distance;
-        
-        float weight1 = m2 / (m1 + m2);
-        float weight2 = m1 / (m1 + m2);
-        
-        firstEntity.Position -= normal * (penetration * weight1);
-        nextEntity.Position += normal * (penetration * weight2);
+        if (positionResponse > 0.000001f)
+        {
+            firstEntity.Position -= positionResponse1 * (penetration / positionResponse);
+            nextEntity.Position += positionResponse2 * (penetration / positionResponse);
+        }
 
         Vector3 contactPoint = firstEntity.Position + normal * firstEntity.Radius;
         RecordCollision(firstEntity, nextEntity, contactPoint);
-        
-        float v1 = Vector3.Dot(firstEntity.Velocity, normal);
-        float v2 = Vector3.Dot(nextEntity.Velocity, normal);
-        
-        float closingSpeed = v1 - v2;
-        
+
+        float closingSpeed = Vector3.Dot(firstEntity.Velocity - nextEntity.Velocity, normal);
         if (closingSpeed <= 0f) return;
-        
-        float seuil = closingSpeed < bounceThreshold ? 0f : restitution;
-        
-        float newV1 = (m1 * v1 + m2 * v2 - m2 * (v1 - v2) * seuil) / (m1 + m2);
-        float newV2 = (m1 * v1 + m2 * v2 - m1 * (v2 - v1) * seuil) / (m1 + m2);
-        
-        firstEntity.Velocity += normal * (newV1 - v1);
-        nextEntity.Velocity += normal * (newV2 - v2);
+        Vector3 velocityResponse1 = FreeAxes(normal, firstEntity.VelocityConstraint) * inverseMass1;
+        Vector3 velocityResponse2 = FreeAxes(normal, nextEntity.VelocityConstraint) * inverseMass2;
+        float velocityResponse = Vector3.Dot(normal, velocityResponse1 + velocityResponse2);
+        if (velocityResponse <= 0.000001f) return;
+
+        float bounce = closingSpeed < BounceThreshold ? 0f : Mathf.Clamp01(restitution);
+        float impulse = (1f + bounce) * closingSpeed / velocityResponse;
+        if (!firstEntity.IsKinematic) firstEntity.Velocity -= velocityResponse1 * impulse;
+        if (!nextEntity.IsKinematic) nextEntity.Velocity += velocityResponse2 * impulse;
     }
 
-    internal void QueueControlledMotion(ControllableEntity source, Vector3 from, Vector3 to, Vector3 velocity)
+    private static Vector3 FreeAxes(Vector3 value, ActiveEntity.Constrain constraint)
     {
-        _controlledMotions.Add(new ControlledMotion
-        {
-            Source = source, From = from, To = to, Velocity = velocity
-        });
-    }
-
-    internal void CancelControlledMotions(ControllableEntity source)
-    {
-        for (int i = _controlledMotions.Count - 1; i >= 0; i--)
-            if (_controlledMotions[i].Source == source) _controlledMotions.RemoveAt(i);
-    }
-
-    private void ProcessControlledMotions()
-    {
-        for (int motionIndex = 0; motionIndex < _controlledMotions.Count; motionIndex++)
-        {
-            ControlledMotion motion = _controlledMotions[motionIndex];
-            if (motion.Source == null || !motion.Source.gameObject.activeInHierarchy) continue;
-
-            for (int i = 0; i < _simulationEntities.Count; i++)
-            {
-                if (!(_simulationEntities[i] is GatshaBallEntity ball) || !ball.CanReceiveControlledHit) continue;
-
-                if (!TrySweepSphere(motion.From, motion.To, motion.Source.Radius,
-                    ball.Position, ball.Radius, out Vector3 normal, out Vector3 contactPoint)) continue;
-
-                TryApplyControlledHit(motion.Source, ball, motion.Velocity, normal, contactPoint);
-            }
-        }
-        _controlledMotions.Clear();
-    }
-
-    private static bool TrySweepSphere(Vector3 from, Vector3 to, float radius, Vector3 ballPosition, float ballRadius, out Vector3 normal, out Vector3 contactPoint)
-    {
-        normal = Vector3.zero;
-        contactPoint = Vector3.zero;
-        Vector3 movement = to - from;
-        Vector3 offset = from - ballPosition;
-        float radiusSum = radius + ballRadius;
-        float c = offset.sqrMagnitude - radiusSum * radiusSum;
-        float hitFraction = 0f;
-
-        if (c > 0f)
-        {
-            float a = movement.sqrMagnitude;
-            if (a <= 1e-12f) return false;
-            float b = Vector3.Dot(offset, movement);
-            if (b >= 0f) return false;
-            float discriminant = b * b - a * c;
-            if (discriminant < 0f) return false;
-
-            hitFraction = (-b - Mathf.Sqrt(discriminant)) / a;
-            if (hitFraction < 0f || hitFraction > 1f) return false;
-        }
-
-        Vector3 fingerAtImpact = from + movement * hitFraction;
-        Vector3 delta = ballPosition - fingerAtImpact;
-        normal = delta.sqrMagnitude > 1e-12f ? delta.normalized : movement.normalized;
-        if (normal.sqrMagnitude <= 1e-12f) return false;
-
-        contactPoint = ballPosition - normal * ballRadius;
-        return true;
-    }
-
-    private void HandleControlledOverlap(ControllableEntity controller, GatshaBallEntity ball)
-    {
-        if (!controller.IsControlled || ball == null || !ball.CanReceiveControlledHit) return;
-
-        Vector3 delta = ball.Position - controller.Position;
-        float radiusSum = controller.Radius + ball.Radius;
-        if (delta.sqrMagnitude > radiusSum * radiusSum) return;
-
-        float distance = delta.magnitude;
-
-        Vector3 normal = distance > 1e-6f ? delta / distance : -ball.Velocity.normalized;
-        if (normal.sqrMagnitude <= 1e-12f) return;
-        Vector3 contactPoint = ball.Position - normal * ball.Radius;
-
-        if (TryApplyControlledHit(controller, ball, Vector3.zero, normal, contactPoint))
-            ball.Position += normal * (radiusSum - distance);
-    }
-
-    private bool TryApplyControlledHit(ControllableEntity controller, GatshaBallEntity ball,
-        Vector3 fingerVelocity, Vector3 normal, Vector3 contactPoint)
-    {
-        if (!ball.CanReceiveControlledHit) return false;
-
-        float closingSpeed = Vector3.Dot(fingerVelocity - ball.Velocity, normal);
-        if (closingSpeed <= 1e-6f) return false;
-
-        Vector3 response = new Vector3(
-            ball.VelocityConstraint.X ? 0f : normal.x,
-            ball.VelocityConstraint.Y ? 0f : normal.y,
-            ball.VelocityConstraint.Z ? 0f : normal.z);
-        float normalResponse = Vector3.Dot(response, normal);
-        if (normalResponse <= 1e-6f) return false;
-
-        float bounce = closingSpeed < BounceThreshold ? 0f : Mathf.Clamp01(restitution) * controller.HitRestitution;
-        
-        float impulse = (1f + bounce) * closingSpeed / (1f / controller.Mass + normalResponse / ball.Mass);
-        Vector3 velocityChange = response * (impulse / ball.Mass);
-        
-        if (!ball.TryReceiveControlledHit(velocityChange, contactPoint)) return false;
-        RecordCollision(controller, ball, contactPoint);
-        return true;
+        return new Vector3(constraint.X ? 0f : value.x,
+            constraint.Y ? 0f : value.y, constraint.Z ? 0f : value.z);
     }
 
     private void RecordCollision(AbstractEntity first, AbstractEntity second, Vector3 point)
@@ -642,7 +548,7 @@ public class PhysicsManager : MonoBehaviour
     {
         if (receiver == null || other == null || !receiver.isActiveAndEnabled) return;
 
-        if (!other.isActiveAndEnabled && !(other is ControllableEntity)) return;
+        if (!other.isActiveAndEnabled) return;
 
         receiver.OnCollision(other, point);
         

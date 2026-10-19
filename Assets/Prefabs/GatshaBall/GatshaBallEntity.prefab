@@ -47,13 +47,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GatshaBallEntity
   _radius: 0.5
+  visualRenderer: {fileID: 8349853827244921946}
+  visualFilter: {fileID: 1819399437842548631}
   enableDebug: 1
   debugOnContact: 0
   colliderGizmoColor: {r: 1, g: 0, b: 0, a: 1}
   initialVelocity: {x: 0, y: 0, z: 0}
   mass: 1
-  visualRenderer: {fileID: 8349853827244921946}
-  visualFilter: {fileID: 1819399437842548631}
+  positionConstraint:
+    X: 0
+    Y: 0
+    Z: 0
+  velocityConstraint:
+    X: 0
+    Y: 0
+    Z: 0
   level: 1
 --- !u!23 &8349853827244921946
 MeshRenderer:
