@@ -365,7 +365,6 @@ public class SuikaManager : MonoBehaviour
         {
             _instance = this;
             
-            DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
     }

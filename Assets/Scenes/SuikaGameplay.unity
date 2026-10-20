@@ -321,110 +321,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!1 &212096998
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 212097001}
-  - component: {fileID: 212097000}
-  - component: {fileID: 212096999}
-  - component: {fileID: 212097002}
-  m_Layer: 0
-  m_Name: InputManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &212096999
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 212096998}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58a962177a531ee4d8e4006ebdcfb91d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InputManager
-  text: {fileID: 0}
-  simulateMouseInEditor: 1
---- !u!114 &212097000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 212096998}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: 
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
---- !u!4 &212097001
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 212096998}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &212097002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 212096998}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f345ac8191c82f44bbc38b39fe83c448, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GatshaSlingshotController
-  gameplayCamera: {fileID: 893496322}
-  inputManager: {fileID: 212096999}
-  grabMarginPixels: 24
-  minimumGrabRadiusPixels: 36
-  motionAssistSeconds: 0.06
-  maximumMotionMarginPixels: 60
-  launchSpeedPerUnit: 8
-  dragDeadZonePixels: 6
-  visualAngleOffset: 0
-  aimMaterial: {fileID: 2100000, guid: 581999fec7d6e174eb529e7aa2bc894d, type: 2}
-  elasticColor: {r: 1, g: 0.75, b: 0.2, a: 1}
-  arrowColor: {r: 0.2, g: 1, b: 0.65, a: 1}
-  lineWidth: 0.1
-  arrowHeadLength: 0.18
 --- !u!1 &221683644
 GameObject:
   m_ObjectHideFlags: 0
@@ -905,6 +801,111 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 610294722}
   m_CullTransparentMesh: 1
+--- !u!1 &677768327
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 677768330}
+  - component: {fileID: 677768329}
+  - component: {fileID: 677768328}
+  m_Layer: 0
+  m_Name: InputManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &677768328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 677768327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d34944c860ee52c4b904e18183eb938f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GatshaSlingshotController
+  gameplayCamera: {fileID: 893496322}
+  inputManager: {fileID: 677768329}
+  grabMarginPixels: 24
+  minimumGrabRadiusPixels: 36
+  motionAssistSeconds: 0.06
+  maximumMotionMarginPixels: 60
+  launchSpeedPerUnit: 8
+  dragDeadZonePixels: 6
+  visualAngleOffset: 0
+  aimMaterial: {fileID: 2100000, guid: 64d4c1b71bce33e4cbf99529b107bd35, type: 2}
+  powerGradient:
+    serializedVersion: 2
+    key0: {r: 0, g: 1, b: 0, a: 1}
+    key1: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    key2: {r: 1, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 32768
+    ctime2: 65535
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 3
+    m_NumAlphaKeys: 2
+  speedForRed: 85
+  dashLength: 0.08
+  dashGap: 0.06
+  fadeStart: 0.65
+  lineWidth: 0.2
+  arrowHeadLength: 0.45
+--- !u!114 &677768329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 677768327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58a962177a531ee4d8e4006ebdcfb91d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InputManager
+  text: {fileID: 0}
+  simulateMouseInEditor: 1
+--- !u!4 &677768330
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 677768327}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.39691, y: 14.39061, z: 5.31428}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &893496319
 GameObject:
   m_ObjectHideFlags: 0
@@ -1635,7 +1636,7 @@ MonoBehaviour:
   captureIncomingEntities: 1
   worldCenterXZ: {x: 0, y: 0}
   useSpatialHashing: 1
-  halfWidth: 15
+  halfWidth: 30
   halfDepth: 10
   floorY: 0
   useCeiling: 0
@@ -1983,7 +1984,7 @@ MonoBehaviour:
   ballParent: {fileID: 221683645}
   startAutomatically: 1
   startDelay: 2
-  NextActionTimer: 5
+  NextActionTimer: 4
   NextActionDecrement: 0.1
   NextActionEvery: 10
   NextActionLimit: 100
@@ -2264,8 +2265,8 @@ SceneRoots:
   m_Roots:
   - {fileID: 893496323}
   - {fileID: 144390620}
-  - {fileID: 212097001}
   - {fileID: 1570971261}
+  - {fileID: 677768330}
   - {fileID: 221683645}
   - {fileID: 1783550728}
   - {fileID: 978003194}

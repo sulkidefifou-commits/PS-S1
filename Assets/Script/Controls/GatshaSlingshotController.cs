@@ -24,8 +24,13 @@ public class GatshaSlingshotController : MonoBehaviour
 
     [Header("Aim Visuals")]
     [SerializeField] private Material aimMaterial;
-    [SerializeField] private Color elasticColor = new Color(1f, 0.75f, 0.2f, 1f);
-    [SerializeField] private Color arrowColor = new Color(0.2f, 1f, 0.65f, 1f);
+    [SerializeField] private Gradient powerGradient = CreateDefaultPowerGradient();
+    [Tooltip("Vitesse initiale correspondant au rouge. Limite visuelle seulement.")]
+    [SerializeField, Min(0.01f)] private float speedForRed = 24f;
+    [SerializeField, Min(0.001f)] private float dashLength = 0.08f;
+    [SerializeField, Min(0.001f)] private float dashGap = 0.06f;
+    [Tooltip("0 : fondu sur toute la distance boule-doigt. 0.5 : fondu sur la seconde moitie.")]
+    [SerializeField, Range(0f, 0.99f)] private float fadeStart = 0f;
     [SerializeField, Min(0.001f)] private float lineWidth = 0.025f;
     [SerializeField, Min(0.001f)] private float arrowHeadLength = 0.18f;
 
@@ -45,8 +50,30 @@ public class GatshaSlingshotController : MonoBehaviour
     private LineRenderer _elastic;
     private LineRenderer _shaft;
     private LineRenderer _head;
-    private Material _elasticMaterial;
-    private Material _arrowMaterial;
+    private Material _visualMaterial;
+    private MaterialPropertyBlock _lineProperties;
+
+    private static readonly int TintId = Shader.PropertyToID("_Tint");
+    private static readonly int LineLengthId = Shader.PropertyToID("_LineLength");
+    private static readonly int DashLengthId = Shader.PropertyToID("_DashLength");
+    private static readonly int DashGapId = Shader.PropertyToID("_DashGap");
+    private static readonly int DashedId = Shader.PropertyToID("_Dashed");
+    private static readonly int FadeToEndId = Shader.PropertyToID("_FadeToEnd");
+    private static readonly int FadeStartId = Shader.PropertyToID("_FadeStart");
+
+    private static Gradient CreateDefaultPowerGradient()
+    {
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(Color.green, 0f),
+                new GradientColorKey(Color.yellow, 0.5f),
+                new GradientColorKey(Color.red, 1f)
+            },
+            new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) });
+        return gradient;
+    }
 
     private void Awake()
     {
@@ -152,7 +179,7 @@ public class GatshaSlingshotController : MonoBehaviour
     {
         point = Vector3.zero;
         if (gameplayCamera == null) return false;
-        Ray ray = gameplayCamera.ScreenPointToRay(screenPosition);
+        UnityEngine.Ray ray = gameplayCamera.ScreenPointToRay(screenPosition);
         if (!_aimPlane.Raycast(ray, out float distance)) return false;
         point = ray.GetPoint(distance);
         return true;
@@ -169,8 +196,15 @@ public class GatshaSlingshotController : MonoBehaviour
             return;
         }
         _fingerWorld = fingerWorld;
-        _pull = _selected.Position - (fingerWorld + _grabOffset);
-        _pull.z = 0f;
+        // Meme puissance qu'avant (distance depuis l'appui initial), mais
+        // un axe unique boule-doigt pour la propulsion et les deux lignes.
+        Vector3 drag = _selected.Position - (fingerWorld + _grabOffset);
+        drag.z = 0f;
+        Vector3 awayFromFinger = _selected.Position - fingerWorld;
+        awayFromFinger.z = 0f;
+        _pull = awayFromFinger.sqrMagnitude > 0.000001f
+            ? awayFromFinger.normalized * drag.magnitude
+            : Vector3.zero;
         if (Vector2.Distance(_startScreenPosition, screenPosition) <= dragDeadZonePixels * PixelScale)
             _pull = Vector3.zero;
         PreviewVelocity = _pull * Mathf.Max(0f, launchSpeedPerUnit);
@@ -212,8 +246,7 @@ public class GatshaSlingshotController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_elasticMaterial != null) Destroy(_elasticMaterial);
-        if (_arrowMaterial != null) Destroy(_arrowMaterial);
+        if (_visualMaterial != null) Destroy(_visualMaterial);
         if (_elastic != null) Destroy(_elastic.gameObject);
         if (_shaft != null) Destroy(_shaft.gameObject);
         if (_head != null) Destroy(_head.gameObject);
@@ -222,39 +255,37 @@ public class GatshaSlingshotController : MonoBehaviour
     private void EnsureVisuals()
     {
         if (_elastic != null) return;
-        if (aimMaterial == null)
+        if (aimMaterial == null || aimMaterial.shader == null ||
+            aimMaterial.shader.name != "Gatsha/SlingshotDotted")
         {
-            Debug.LogWarning("Assigner Aim Material (Unlit) pour afficher l'elastique et la fleche.", this);
+            Debug.LogWarning("Aim Material doit utiliser le shader Gatsha/SlingshotDotted fourni.", this);
             return;
         }
-        _elasticMaterial = CreateMaterial(elasticColor);
-        _arrowMaterial = CreateMaterial(arrowColor);
-        _elastic = CreateLine("Slingshot Elastic", 2, _elasticMaterial);
-        _shaft = CreateLine("Slingshot Arrow", 2, _arrowMaterial);
-        _head = CreateLine("Slingshot Arrow Head", 3, _arrowMaterial);
+        _visualMaterial = new Material(aimMaterial);
+        _lineProperties = new MaterialPropertyBlock();
+        _elastic = CreateLine("Slingshot Elastic", 2);
+        _shaft = CreateLine("Slingshot Arrow", 2);
+        _head = CreateLine("Slingshot Arrow Head", 3);
     }
 
-    private Material CreateMaterial(Color color)
-    {
-        Material material = new Material(aimMaterial);
-        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
-        if (material.HasProperty("_Color")) material.SetColor("_Color", color);
-        return material;
-    }
-
-    private LineRenderer CreateLine(string objectName, int count, Material material)
+    private LineRenderer CreateLine(string objectName, int count)
     {
         GameObject lineObject = new GameObject(objectName);
         lineObject.layer = gameObject.layer;
         lineObject.transform.SetParent(transform, false);
         LineRenderer line = lineObject.AddComponent<LineRenderer>();
         line.useWorldSpace = true;
-        line.sharedMaterial = material;
+        line.sharedMaterial = _visualMaterial;
         line.positionCount = count;
+        line.textureMode = LineTextureMode.Stretch;
+        line.alignment = LineAlignment.View;
         line.startColor = Color.white;
         line.endColor = Color.white;
-        line.widthMultiplier = lineWidth;
-        line.numCapVertices = 2;
+        line.startWidth = 1f;
+        line.endWidth = 1f;
+        line.widthMultiplier = Mathf.Max(0.001f, lineWidth);
+        line.numCapVertices = 0;
+        line.numCornerVertices = 0;
         line.shadowCastingMode = ShadowCastingMode.Off;
         line.receiveShadows = false;
         line.enabled = false;
@@ -268,6 +299,21 @@ public class GatshaSlingshotController : MonoBehaviour
         if (_head != null) _head.enabled = show;
     }
 
+    private void StyleLine(LineRenderer line, Color color, float length, bool dashed, bool fade)
+    {
+        // Unity copie le bloc : un seul objet est reutilise pour les trois lignes.
+        _lineProperties.Clear();
+        _lineProperties.SetColor(TintId, color);
+        _lineProperties.SetFloat(LineLengthId, Mathf.Max(0.0001f, length));
+        _lineProperties.SetFloat(DashLengthId, Mathf.Max(0.001f, dashLength));
+        _lineProperties.SetFloat(DashGapId, Mathf.Max(0.001f, dashGap));
+        _lineProperties.SetFloat(DashedId, dashed ? 1f : 0f);
+        _lineProperties.SetFloat(FadeToEndId, fade ? 1f : 0f);
+        _lineProperties.SetFloat(FadeStartId, Mathf.Clamp(fadeStart, 0f, 0.99f));
+        line.SetPropertyBlock(_lineProperties);
+        line.widthMultiplier = Mathf.Max(0.001f, lineWidth);
+    }
+
     private void DrawAim()
     {
         if (_selected == null || _elastic == null || gameplayCamera == null || _pull.sqrMagnitude < 0.000001f)
@@ -276,17 +322,30 @@ public class GatshaSlingshotController : MonoBehaviour
             return;
         }
         ShowVisuals(true);
-        Vector3 center = _selected.Position - gameplayCamera.transform.forward * (_selected.Radius + 0.03f);
         Vector3 direction = _pull.normalized;
+        Vector3 offset = -gameplayCamera.transform.forward * (_selected.Radius + 0.03f);
+        Vector3 center = _selected.Position + offset;
+        Vector3 finger = _fingerWorld + offset;
         Vector3 side = new Vector3(-direction.y, direction.x, 0f);
         Vector3 tip = center + _pull;
         float headLength = Mathf.Min(arrowHeadLength, _pull.magnitude * 0.4f);
+
+        // Les deux segments partagent exactement le meme axe, sans coude au centre.
         _elastic.SetPosition(0, center);
-        _elastic.SetPosition(1, _fingerWorld + center - _selected.Position);
+        _elastic.SetPosition(1, finger);
         _shaft.SetPosition(0, center);
         _shaft.SetPosition(1, tip);
-        _head.SetPosition(0, tip - direction * headLength + side * headLength * 0.5f);
+        Vector3 headLeft = tip - direction * headLength + side * headLength * 0.5f;
+        Vector3 headRight = tip - direction * headLength - side * headLength * 0.5f;
+        _head.SetPosition(0, headLeft);
         _head.SetPosition(1, tip);
-        _head.SetPosition(2, tip - direction * headLength - side * headLength * 0.5f);
+        _head.SetPosition(2, headRight);
+
+        float power = Mathf.Clamp01(PreviewVelocity.magnitude / Mathf.Max(0.01f, speedForRed));
+        Color color = powerGradient.Evaluate(power);
+        StyleLine(_elastic, color, Vector3.Distance(center, finger), true, true);
+        StyleLine(_shaft, color, _pull.magnitude, true, false);
+        // Pointe pleine et opaque pour garder la direction de tir lisible.
+        StyleLine(_head, color, 2f * Vector3.Distance(headLeft, tip), false, false);
     }
 }
