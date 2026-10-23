@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe503c5abfef8234e982ec4168a0e89a, type: 3}
+  m_Name: GA_Triple_Right_ Low
+  m_EditorClassIdentifier: Assembly-CSharp::GatshaActions
+  UseMinimumActionCount: 0
+  MinimumActionCount: 0
+  UseMaximumActionCount: 0
+  MaximumActionCount: 20
+  Actions:
+  - DelayBefore:
+      Mode: 0
+      Value: 0
+      Min: 0
+      Max: 0.5
+    InitialLevel:
+      Mode: 1
+      Value: 1
+      Min: 1
+      Max: 2
+    Side: 1
+    SpawnOffset:
+      Mode: 1
+      Value: 0.2
+      Min: 18
+      Max: 22
+    InertiaPoint:
+      Mode: 1
+      Value: {x: 0, y: 3}
+      Min: {x: -1, y: 26}
+      Max: {x: 1, y: 28}
+  - DelayBefore:
+      Mode: 0
+      Value: 0.6
+      Min: 0
+      Max: 0.5
+    InitialLevel:
+      Mode: 1
+      Value: 1
+      Min: 1
+      Max: 2
+    Side: 1
+    SpawnOffset:
+      Mode: 1
+      Value: 0.2
+      Min: 18
+      Max: 22
+    InertiaPoint:
+      Mode: 1
+      Value: {x: 0, y: 3}
+      Min: {x: -1, y: 26}
+      Max: {x: 1, y: 28}
+  - DelayBefore:
+      Mode: 0
+      Value: 0.6
+      Min: 0
+      Max: 0.5
+    InitialLevel:
+      Mode: 1
+      Value: 1
+      Min: 1
+      Max: 2
+    Side: 1
+    SpawnOffset:
+      Mode: 1
+      Value: 0.2
+      Min: 18
+      Max: 22
+    InertiaPoint:
+      Mode: 1
+      Value: {x: 0, y: 3}
+      Min: {x: -1, y: 26}
+      Max: {x: 1, y: 28}
